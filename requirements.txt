@@ -1,0 +1,5 @@
+argon2-cffi
+argon2-cffi-bindings
+cffi
+pycryptodome
+pyperclip
