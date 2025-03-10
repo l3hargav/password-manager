@@ -15,10 +15,6 @@ VAULT_PATH = os.path.expanduser("~/.local/share/password_manager/vault.bin")
 # NOTES:
 # AES-GCM --> 12 byte nonce
 
-# TODO:
-# - Add rehashing(maybe)
-# - Add the code as a widget in qtile
-
 
 def create_vault(master_password):
     ph = PasswordHasher()
@@ -35,7 +31,6 @@ def create_vault(master_password):
         f.write(data)
 
 # Checks whether the password matches the master password
-# For the Qtile Widget
 def check_password(password):
     with open(VAULT_PATH, "rb") as f:
         data = f.read()
@@ -48,9 +43,6 @@ def check_password(password):
     except:
         return False
 
-
-# TODO:
-# Make the output easily readable
 
 def open_vault(master_password):
     ph = PasswordHasher()
@@ -79,7 +71,6 @@ def open_vault(master_password):
     vault_data = json.loads(decrypted_data.decode())
     return vault_data
 
-# TODO:
 
 def add_to_vault(master_password, mode):
     ph = PasswordHasher()
