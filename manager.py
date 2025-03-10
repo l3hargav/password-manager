@@ -17,7 +17,7 @@ VAULT_PATH = os.path.expanduser("~/.local/share/password_manager/vault.bin")
 
 # IMP: 
 # Make sure create_vault is only called when the vault.bin file DOES NOT EXIST.
-def create_vault(master_password):
+def create_vault(master_password: str) -> None:
     ph = PasswordHasher()
     salt = get_random_bytes(16)
     nonce = get_random_bytes(12)
@@ -32,7 +32,7 @@ def create_vault(master_password):
         f.write(data)
 
 # Checks whether the password matches the master password
-def check_password(password):
+def check_password(password: str) -> bool:
     with open(VAULT_PATH, "rb") as f:
         data = f.read()
 
@@ -45,7 +45,7 @@ def check_password(password):
         return False
 
 
-def open_vault(master_password):
+def open_vault(master_password: str) -> dict[str, dict[str, str]]:
     ph = PasswordHasher()
     with open(VAULT_PATH, "rb") as f:
         data = f.read()
@@ -73,8 +73,8 @@ def open_vault(master_password):
     return vault_data
 
 
-# Added mode to specify whether running function in terminal or for the Qtile widget
-def add_to_vault(master_password, mode):
+# Added mode to specify whether to [a]dd or [u]pdate
+def add_to_vault(master_password: str, mode: str) -> None:
     ph = PasswordHasher()
     with open(VAULT_PATH, "rb") as f:
         data = f.read()
@@ -130,7 +130,7 @@ def add_to_vault(master_password, mode):
         f.write(data)
 
 
-def delete_from_vault(master_password):
+def delete_from_vault(master_password: str) -> None:
     with open(VAULT_PATH, "rb") as f:
         data = f.read()
     website = input("Enter website password to delete: ")
@@ -153,7 +153,7 @@ def delete_from_vault(master_password):
         f.seek(0)
         f.write(data)
 
-def get_password(master_password, mode='T'):
+def get_password(master_password: str, mode: str = 'T') -> dict[str, dict[str, str]] | None:
     with open(VAULT_PATH, "rb") as f:
         data = f.read()
 
@@ -181,10 +181,10 @@ def get_password(master_password, mode='T'):
     else:
         print("Website does not exist in the vault")
         sys.exit()
-    return None
+    return {}
 
 
-def generate_password():
+def generate_password() -> str:
     alphabet = string.ascii_letters + string.digits
     password = ''.join(secrets.choice(alphabet) for _ in range(16))
     return password
@@ -219,6 +219,7 @@ if __name__ == "__main__":
         match option:
             case 1:
                 vault_data = open_vault(master_password)
+                print(type(vault_data))
                 print("-------------------------------")
                 for key in vault_data["passwords"]:
                     print(key)
