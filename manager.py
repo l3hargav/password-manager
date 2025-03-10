@@ -15,7 +15,8 @@ VAULT_PATH = os.path.expanduser("~/.local/share/password_manager/vault.bin")
 # NOTES:
 # AES-GCM --> 12 byte nonce
 
-
+# IMP: 
+# Make sure create_vault is only called when the vault.bin file DOES NOT EXIST.
 def create_vault(master_password):
     ph = PasswordHasher()
     salt = get_random_bytes(16)
@@ -72,6 +73,7 @@ def open_vault(master_password):
     return vault_data
 
 
+# Added mode to specify whether running function in terminal or for the Qtile widget
 def add_to_vault(master_password, mode):
     ph = PasswordHasher()
     with open(VAULT_PATH, "rb") as f:
@@ -151,11 +153,11 @@ def delete_from_vault(master_password):
         f.seek(0)
         f.write(data)
 
-def get_password(master_password):
+def get_password(master_password, mode='T'):
     with open(VAULT_PATH, "rb") as f:
         data = f.read()
 
-    encrypted_data = data.split(b"|",  1)[1]
+    encrypted_data = data.split(b"|", 1)[1]
     salt, nonce, tag, cipher_text = encrypted_data[:16], encrypted_data[16:28], encrypted_data[28:44], encrypted_data[44:]
     key = hash_secret_raw(secret=master_password.encode(),
                             salt=salt, time_cost=4, memory_cost=65536,
@@ -169,6 +171,9 @@ def get_password(master_password):
         sys.exit()
 
     vault_data = json.loads(decrypted_data.decode())
+    if mode == 'Q':
+        return vault_data
+
     website = input("Enter website to retrieve password: ")
     if website in vault_data["passwords"]:
         pyperclip.copy(vault_data["passwords"][website])
