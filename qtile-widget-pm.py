@@ -38,7 +38,6 @@ class PasswordManager(base.ThreadPoolText):
        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
        # Handle not entering anything in the field
        if result.stdout == '':
-           subprocess.run(["notify-send", "Password Manager", "Please enter a password"])
            self.update(self.poll())
            return
 
