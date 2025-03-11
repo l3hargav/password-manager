@@ -1,18 +1,19 @@
+import os
 import pyperclip
 import subprocess
-from manager import check_password, get_password 
+from manager import check_password, get_password, create_vault
 from libqtile import qtile
 from libqtile.widget import base
 
 class PasswordManager(base.ThreadPoolText):
     defaults = [
         ("vault_path", "~/.local/share/password_manager/vault.bin", "Path to the vault"),
-        ("default_text",'', 'Default text that is displayed'),
     ]
     def __init__(self, **config):
         super().__init__("", **config)
         self.add_defaults(PasswordManager.defaults)
         self.locked = True
+        self.vault_path = os.path.expanduser("~/.local/share/password_manager/vault.bin")
         self.password = ""
         self.add_callbacks(
             {
@@ -20,10 +21,28 @@ class PasswordManager(base.ThreadPoolText):
             })
 
     def manager(self):
-        cmd = "echo | rofi -dmenu -password -p 'Enter Master Password:' -no-config -theme ~/.config/rofi/password-prompt.rasi"
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+       if not os.path.exists(self.vault_path): 
+            cmd = "echo | rofi -dmenu -password -p 'Enter Master Password to make the vault:' -no-config -theme ~/.config/rofi/password-prompt.rasi"
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            # Handle not entering anything in the field
+            if result.stdout == '':
+                subprocess.run(["notify-send", "Password Manager", "Please input a password"])
+                self.update(self.poll())
+                return
+            create_vault(result.stdout.strip())
+            subprocess.run(["notify-send", "Password Manager", "Created a new vault"])
+            self.update(self.poll())
+            return
 
-        if check_password(result.stdout.strip()):
+       cmd = "echo | rofi -dmenu -password -p 'Enter Master Password:' -no-config -theme ~/.config/rofi/password-prompt.rasi"
+       result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+       # Handle not entering anything in the field
+       if result.stdout == '':
+           subprocess.run(["notify-send", "Password Manager", "Please enter a password"])
+           self.update(self.poll())
+           return
+
+       if check_password(result.stdout.strip()):
             self.locked = False
             self.update(self.poll())
             self.password = result.stdout.strip()
@@ -40,15 +59,14 @@ class PasswordManager(base.ThreadPoolText):
                 pyperclip.copy(data["passwords"][website])  
                 self.update(self.poll())
                 qtile.call_later(5, self.auto_lock)
-        else:
+       else:
             subprocess.run(["notify-send", "Password Manager", "❌ Wrong Password"])
             self.locked = True
             self.update(self.poll())
 
-        self.update(self.poll())
+       self.update(self.poll())
 
     def auto_lock(self):
-        print("THIS IS IN THE FUNCTION")
         self.locked = True
         self.update(self.poll())
 
