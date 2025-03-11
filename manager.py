@@ -190,6 +190,7 @@ def generate_password() -> str:
     return password
 
 
+# Terminal based manager
 if __name__ == "__main__":
     if not os.path.exists(VAULT_PATH):
         master_password = getpass.getpass(
