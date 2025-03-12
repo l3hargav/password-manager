@@ -13,7 +13,7 @@ class PasswordManager(base.ThreadPoolText):
         super().__init__("", **config)
         self.add_defaults(PasswordManager.defaults)
         self.locked = True
-        self.vault_path = os.path.expanduser("~/.local/share/password_manager/vault.bin")
+        self.vault_path = os.path.expanduser(self.vault_path)
         self.password = ""
         self.add_callbacks(
             {
@@ -45,15 +45,24 @@ class PasswordManager(base.ThreadPoolText):
             self.locked = False
             self.update(self.poll())
             self.password = result.stdout.strip()
-            cmd = "echo | rofi -dmenu -p '' -no-config -theme ~/.config/rofi/password-prompt.rasi"
-            result = subprocess.run(cmd, shell=True, capture_output= True, text=True)
-            website = result.stdout.strip()
+            init_cmd = "echo | rofi -dmenu -p '1) Get password for a website\n2) Update password for a website\n3) Add a new password for a website\n4)Delete password for a website: ' -no-config -theme ~/.config/rofi/password-prompt.rasi"
+            init_result = subprocess.run(init_cmd, shell=True, capture_output=True, text=True)
+            option = int(init_result.stdout.strip())
             data = get_password(self.password, mode='Q')
-            if website not in data["passwords"]:
-                subprocess.run(["notify-send", "Password Manager", "Password for given input does not exist in the vault!"])
-                self.locked = True
-                self.update(self.poll())
-            else:
+           
+            if option == 1:
+                if len(data["passwords"]) == 0:
+                    subprocess.run(["notify-send", "Password Manager", "No entries exist yet, please add a password first"])
+                    self.update(self.poll())
+                    return
+                cmd = "echo | rofi -dmenu -p 'Enter website: ' -no-config -theme ~/.config/rofi/password-prompt.rasi"
+                result = subprocess.run(cmd, shell=True, capture_output= True, text=True)
+                website = result.stdout.strip()
+                if website not in data["passwords"]:
+                    subprocess.run(["notify-send", "Password Manager", "Password for given input does not exist in the vault!"])
+                    self.locked = True
+                    self.update(self.poll())
+                    return
                 subprocess.run(["notify-send", "Password Manager", "Password copied to clipboard"])
                 pyperclip.copy(data["passwords"][website])  
                 self.update(self.poll())
