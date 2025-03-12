@@ -49,7 +49,6 @@ class PasswordManager(base.ThreadPoolText):
             init_result = subprocess.run(init_cmd, shell=True, capture_output=True, text=True)
             option = int(init_result.stdout.strip())
             data = get_password(self.password, mode='Q')
-           
             if option == 1:
                 if len(data["passwords"]) == 0:
                     subprocess.run(["notify-send", "Password Manager", "No entries exist yet, please add a password first"])
@@ -67,6 +66,8 @@ class PasswordManager(base.ThreadPoolText):
                 pyperclip.copy(data["passwords"][website])  
                 self.update(self.poll())
                 qtile.call_later(5, self.auto_lock)
+            else:
+                subprocess.run(["notify-send", "Password Manager", "Not Implemented"])
        else:
             subprocess.run(["notify-send", "Password Manager", "❌ Wrong Password"])
             self.locked = True
