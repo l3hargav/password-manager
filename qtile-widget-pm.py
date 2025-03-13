@@ -81,7 +81,8 @@ class PasswordManager(base.ThreadPoolText):
                 self.add_to_vault(mode = 'u')
             elif option == 3:
                 self.add_to_vault(mode = 'a')
-
+            elif option == 4:
+                self.delete_from_vault()
             else:
                 subprocess.run(["notify-send", "Password Manager", "Not Implemented"])
        else:
@@ -153,3 +154,29 @@ class PasswordManager(base.ThreadPoolText):
 
         return
 
+    def delete_from_vault(self) -> None:
+        cmd = "echo | rofi -dmenu -p 'Enter website: ' -no-config -theme ~/.config/rofi/password-prompt.rasi"
+        result = subprocess.run(cmd, shell=True, capture_output= True, text=True)
+        website = result.stdout.strip()
+        with open(self.vault_path, "rb") as f:
+            data = f.read()
+        master_hash, encrypted_data = data.split(b"|", 1)
+        salt, nonce, tag, cipher_text = encrypted_data[:16], encrypted_data[
+            16:28], encrypted_data[28:44], encrypted_data[44:]
+        key = hash_secret_raw(secret=self.password.encode(),
+                                salt=salt, time_cost=4, memory_cost=65536,
+                              parallelism=2, hash_len=32, type=Type.ID)
+        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+        vault_data = cipher.decrypt_and_verify(cipher_text, tag)
+        passwords = json.loads(vault_data.decode())
+        del passwords["passwords"][website]
+        vault_data = json.dumps(passwords).encode("utf-8")
+        new_nonce = get_random_bytes(12)
+        cipher = AES.new(key, AES.MODE_GCM, nonce=new_nonce)
+        cipher_text, tag = cipher.encrypt_and_digest(vault_data)
+        data = master_hash + b"|" + salt + new_nonce + tag + cipher_text
+        with open(self.vault_path, "wb") as f:
+            f.seek(0)
+            f.write(data)
+        subprocess.run(["notify-send", "Password Manager", "Deleted website info from vault"])
+        return
