@@ -4,7 +4,6 @@ import string
 import secrets
 import pyperclip
 import subprocess
-from argon2 import PasswordHasher
 from argon2.low_level import hash_secret_raw, Type
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
