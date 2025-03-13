@@ -51,7 +51,7 @@ class PasswordManager(base.ThreadPoolText):
             self.locked = False
             self.update(self.poll())
             self.password = result.stdout.strip()
-            init_cmd = "echo | rofi -dmenu -p '1) Get password for a website\n2) Update password for a website\n3) Add a new password for a website\n4)Delete password for a website: ' -no-config -theme ~/.config/rofi/password-prompt.rasi"
+            init_cmd = "echo | rofi -dmenu -p '1) Get password for a website\n2) Update password for a website\n3) Add a new password for a website\n4) Delete password for a website: ' -no-config -theme ~/.config/rofi/password-prompt.rasi"
             init_result = subprocess.run(init_cmd, shell=True, capture_output=True, text=True)
             option = int(init_result.stdout.strip())
             # Use a better func name
